@@ -19,15 +19,15 @@ use MediaWiki::API;
 
 ## CONNECT TO AN API
 
-#my $api_url = 'http://en.wikipedia.org/w/api.php';
+my $api_url = 'http://en.wikipedia.org/w/api.php';
 #my $api_url = 'http://seqanswers.com/w/api.php';
-my $api_url = 'http://pdbwiki.org/api.php';
+#my $api_url = 'http://pdbwiki.org/api.php';
 
 
 
 ## Get API object for the given URL
 my $mw = MediaWiki::API->
-  new({ api_url => $api_url });
+  new({ api_url => $api_url, retries => 5 });
 
 
 
@@ -36,9 +36,9 @@ $mw->{config}->{on_error} = \&on_error;
 
 ## The error function
 sub on_error {
-  print "Error code: ", $mw->{error}->{code}, "\n";
-  print $mw->{error}->{details}, "\n";
-  print $mw->{error}->{stacktrace}, "\n";
+  warn "Error code: ", $mw->{error}->{code}, "\n";
+  warn $mw->{error}->{details}, "\n";
+  warn $mw->{error}->{stacktrace}, "\n";
   die "err\n";
 }
 
@@ -46,19 +46,19 @@ sub on_error {
 
 ## Print the site name
 my $ref = $mw->api( { action => 'query', meta => 'siteinfo' } );
-print "Sitename: '", $ref->{query}->{general}->{sitename}, "'\n";
+warn "Sitename: '", $ref->{query}->{general}->{sitename}, "'\n";
 
 
 
 
 
 ## Grab the recent changes list (object)
-my $rcstart =
-  DateTime->now->subtract(months => 1)->epoch;
+#my $rcstart =
+#  DateTime->now->subtract(months => 1)->epoch;
 
 ## Debugging
-#my $rcstart =
-#  DateTime->now->subtract(hours => 7)->epoch;
+my $rcstart =
+  DateTime->now->subtract(minutes => 1)->epoch;
 
 warn "collecting changes since $rcstart\n";
 my $rc_array = $mw->
@@ -74,39 +74,38 @@ my $rc_array = $mw->
 	 ## returned by the API
 	 rclimit => '500',
 	 
-	 ## Filters
-	 rcshow  => '!minor',
-	 rcshow  => '!bot',
+	 ## Filters: Lets post process these (using flags), !filter
+	 #rcshow => '!minor|!bot',
+	 #rctype => 'edit|new|log',
 	 
 	 #rcexcludeuser => '',
-	 #rctype => edit / new / log,
 	 
-	 ## Properties
+	 ## Properties to return
 	 rcprop =>
 	   'user|comment|timestamp|title|sizes|flags'
 	 
 	},
 	{
-	 ## Config
+	 ## MW::API Config
 	 
 	 ## Process result as they come in with this function
 	 ## (responsible for returning something useful).
 	 #hook => \&look_hook,
 	 
 	 ## Max number of batches to collect (for debugging)
-	 max => 1
+	 #max => 1
 	 
 	}
        );
 
-sub look_hook{
-  print "hi\n";
-}
+#sub look_hook{
+#  warn "hi\n";
+#}
 
 warn 'found ', scalar(@$rc_array), " revisions\n";
 
 ## Debugging
-#print Dumper $rc_array;
+#warn Dumper $rc_array;
 
 
 
@@ -120,7 +119,7 @@ my(%users,
 foreach my $rc (@$rc_array){
   
   ## Debugging
-  #print Dumper $rc;
+  #warn Dumper $rc;
   
   $users{$rc->{ user}}++;
   $pages{$rc->{title}}++;
@@ -145,8 +144,6 @@ sub p { $pages{$b} <=> $pages{$a} }
 
 
 __END__
-
-# MW's timestamp (ISO8601): '2011-01-18T21:31:02Z'
 
 # 20:06 -!- dbolser [~dmb@bioinformatics.org] has joined #perl
 # 20:06 < dbolser> how can I get the current date, minus one month,
