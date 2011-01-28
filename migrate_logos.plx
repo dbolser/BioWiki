@@ -24,6 +24,13 @@ my $nett_mw = MediaWiki::API->
 my $bifx_mw = MediaWiki::API->
   new({ api_url => $bifx_api_url, retries => 5 });
 
+## Configure the file url (for downloading images)
+#$bifx_mw->{config}->{files_url} = 'http://www.exotica.org.uk';
+
+## Configure the upload url (for uploading images)
+$bifx_mw->{config}->{upload_url}
+  = 'http://www.bioinformatics.org/wiki/Special:Upload';
+
 
 
 ## Configure a default error function (saves us checking for errors)
@@ -56,7 +63,7 @@ warn "Sitename: '", $ref2->{query}->{general}->{sitename}, "'\n";
 
 
 
-## Log in to the wiki
+## Log in to the wiki (needed for edits, uploads, etc.)
 $bifx_mw->
   login({ lgname => 'DanBolser',
 	  lgpassword => '000006',
@@ -72,7 +79,9 @@ my $page_list = $nett_mw->
 	   cmtitle => 'Category:BioWiki',
 	 });
 
-print "got ", scalar(@$page_list), " pages to migrate\n";
+warn "got ", scalar(@$page_list), " pages to migrate\n";
+
+
 
 
 
@@ -120,107 +129,60 @@ foreach my $page (@$page_list){
   
   
   
-  ## Fill in the missing values of the template fields we can expect
-  $fields{'Has TagLine'}         ||= '';
-  $fields{'Has Create Date'}     ||= '';
-  $fields{'Has Logo'}            ||= '';
-  $fields{'Has Number of Pages'} ||= '';
-  $fields{'Has Number of Users'} ||= '';
-  $fields{'Has Page Edits'}      ||= '';
-  $fields{'Has URL'}             ||= '';
-  $fields{'Has Contact'}         ||= '';
-  $fields{'Has Contact Email'}   ||= '';
-  $fields{'Has Institution'}     ||= '';
+  ## Here, we only care about the image
   
-  
-  ## Sanity check fields
-  for(keys %fields){
-    # used
-    next if /^Has TagLine$/;
-    next if /^Has Create Date$/;
-    next if /^Has Logo$/;
-    next if /^Has Number of Pages$/;
-    next if /^Has Number of Users$/;
-    next if /^Has Page Edits$/;
-    next if /^Has URL$/;
-    next if /^Has Contact$/;
-    next if /^Has Contact Email$/;
-    next if /^Has Institution$/;
-    
-    # discarded
-    next if /^Has Number of Views$/;
-    next if /^Has Number of Editors$/;
-    next if /^Has Number of Editors is Estimate$/;
-    next if /^Is Verified$/;
-    next if /^Has Main Page Views$/;
-    
-    # missed
-    die "How did we miss : '$_' ?\n"
-  }
-  
-  
-  
-  ## Create the new page text;
-  
-  my $new_page_text = <<EOT
-{{BioWiki/Description
- |tag line = $fields{'Has TagLine'}
-}}
-$post_text
-
-
-{{BioWiki
- |date created = $fields{'Has Create Date'}
- |logo file    = $fields{'Has Logo'}
- |num pages    = $fields{'Has Number of Pages'}
- |num users    = $fields{'Has Number of Users'}
- |num contribs = $fields{'Has Page Edits'}
- |contribs     = Raw edit count
- |url          = $fields{'Has URL'}
- |people       = $fields{'Has Contact'}
- |email        = $fields{'Has Contact Email'}
- |institutions = $fields{'Has Institution'}
-}}
-
-{{Links}}
-{{References}}
-{{External links box}}
-
-EOT
-;
-  
-  #print $new_page_text, "\n";
-  
-  
-  
-  warn "writing\n";
-  
-  my $new_page_name = $page_title;
-  
-  my $new_page_ref = $bifx_mw->
-    get_page( { title => $new_page_name } );
-  
-  #print Dumper $new_page_ref;
-  #next;
-  
-  ## Don't trash existing pages
-  unless ( exists($new_page_ref->{missing}) ){
-    warn "skipping\n";
+  if(! exists $fields{'Has Logo'}){
+    warn "no logo\n";
     next;
   }
   
-  ### To avoid edit conflicts
-  #my $timestamp = $new_page_ref->{timestamp};
+  my $logo_name = $fields{'Has Logo'};
   
-  $bifx_mw->
-    edit({ action => 'edit',
-	   title => $new_page_name,
-	   ## To avoid edit conflicts
-	   #basetimestamp => $timestamp,
-	   text => $new_page_text,
-	 });
+  warn "downloading 'Image:$logo_name'\n";
   
+  my $logo = $nett_mw->
+    download({ title => 'Image:'. $logo_name });
+  
+  ## It's the raw image data!
+  #print $logo;
+  
+  warn "OK\n";
+  
+  
+  ## The upload fails for some reason, so we just save the downloaded
+  ## files...
+  
+  open FH, '>', "Images/$logo_name"
+    or die "failed to open file for writing 'Images/$logo_name' : $!\n";
+  
+  print FH $logo;
+  close FH;
+  
+  
+  
+  ### Upload
+  #
+  #warn "uploading\n";
+  #
+  #my $new_page_ref = $bifx_mw->
+  #  get_page( { title => 'Image:'. $logo_name } );
+  #
+  #print Dumper $new_page_ref;
+  #
+  ### Don't trash existing pages
+  #unless( exists($new_page_ref->{missing}) ){
+  #  warn "image exists, skipping\n";
+  #  next;
+  #}
+  #
+  #$bifx_mw->
+  #  upload({ title   => $logo_name,
+  #           summary => 'BioWiki logo upload',
+  #           data    => $logo
+  #         });
+  #
   #exit;
 }
 
 warn "OK\n";
+
