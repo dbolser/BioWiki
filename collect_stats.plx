@@ -16,12 +16,25 @@ use DateTime;
 use MediaWiki::API;
 
 
+## We use an 'epoch' format time here, becase it's easy to pass to
+## MediaWiki.
+my $rcstart =
+  DateTime->now->subtract(months => 1)->epoch;
+
+## Debugging
+#my $rcstart =
+#  DateTime->now->subtract(minutes => 1)->epoch;
+
+
+
+
 
 ## CONNECT TO AN API
 
-my $api_url = 'http://en.wikipedia.org/w/api.php';
+#my $api_url = 'http://en.wikipedia.org/w/api.php';
 #my $api_url = 'http://seqanswers.com/w/api.php';
 #my $api_url = 'http://pdbwiki.org/api.php';
+my $api_url = 'http://www.bioinformatics.org/w/api.php';
 
 
 
@@ -44,7 +57,7 @@ sub on_error {
 
 
 
-## Print the site name
+## Print the site name (shows we got a connection) 
 my $ref = $mw->api( { action => 'query', meta => 'siteinfo' } );
 warn "Sitename: '", $ref->{query}->{general}->{sitename}, "'\n";
 
@@ -53,12 +66,6 @@ warn "Sitename: '", $ref->{query}->{general}->{sitename}, "'\n";
 
 
 ## Grab the recent changes list (object)
-#my $rcstart =
-#  DateTime->now->subtract(months => 1)->epoch;
-
-## Debugging
-my $rcstart =
-  DateTime->now->subtract(minutes => 1)->epoch;
 
 warn "collecting changes since $rcstart\n";
 my $rc_array = $mw->
