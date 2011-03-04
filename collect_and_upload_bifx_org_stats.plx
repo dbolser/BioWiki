@@ -15,6 +15,9 @@ use DateTime;
 
 use MediaWiki::API;
 
+use Digest::MD5 qw(md5_hex);
+
+
 
 ## We use an 'epoch' format time here, because it's easy to pass to
 ## MediaWiki.
@@ -35,7 +38,7 @@ my $api_url = 'http://www.bioinformatics.org/w/api.php';
 
 
 
-## CONNECT TO THE BIOWIKIAPI (as above in this case)
+## CONNECT TO THE BIOWIKI API (as above in this case)
 
 
 
@@ -197,15 +200,21 @@ print "total edits = $total_edits\n";
 
 ## OK, now we have to upload...
 
-my $page = $mw->
-  get_page({ title => 'Bioinformatics.Org Wiki' });
+# Step 1) parse the existing BioWiki page
 
-#print Dumper $page;
+## In this simple case we don't need a new MW::API object for upload
 
-my $page_text = $page->{'*'};
+my $page_title = 'Bioinformatics.Org Wiki';
+
+my $page_ref = $mw->
+  get_page({ title => $page_title });
+
+#print Dumper $page_ref;
+
+my $page_text = $page_ref->{'*'};
 
 ## Parse out the (first) 'BioWiki' template from the page text
-die "fail\n"
+die "failed to parse page '$page_title'\n"
   unless $page_text =~ /^(.*?){{(BioWiki)\s*\|(.*?)}}(.*)$/s;
 
 #print "'$1'\n";
@@ -235,23 +244,29 @@ for(keys %fields){
   next if /^num users$/;
   next if /^num contribs$/;
   next if /^contribs$/;
+  next if /^platform$/;
+  next if /^extensions$/;
   next if /^url$/;
   next if /^people$/;
   next if /^email$/;
   next if /^institutions$/;
+
+  next if /^num users active$/;
+  next if /^num users new$/;
+  next if /^num pages active$/;
+  next if /^num pages new$/;
+  next if /^num edits$/;
   
   # missed
-  die "How did we miss : '$_' ?\n"
+  warn "How did we miss : '$_' ?\n"
 }
 
 
 
-## Create the new page text;
+# Step 2) create the new page text
 
 my $new_page_text = "
-
 $pre_text
-
 {{BioWiki
  |date created = ". ($fields{'date created'} || ''). "
  |logo file    = ". ($fields{'logo file'}    || ''). "
@@ -259,56 +274,52 @@ $pre_text
  |num users    = ". ($fields{'num users'}    || ''). "
  |num contribs = ". ($fields{'num contribs'} || ''). "
  |contribs     = ". ($fields{'contribs'}     || ''). "
+ |platform     = ". ($fields{'platform'}     || ''). "
+ |extensions   = ". ($fields{'extensions'}   || ''). "
  |url          = ". ($fields{'url'}          || ''). "
  |people       = ". ($fields{'people'}       || ''). "
  |email        = ". ($fields{'email'}        || ''). "
  |institutions = ". ($fields{'institutions'} || ''). "
 
- |one = scalar keys %users
- |two = $number_of_new_users
- |thr = scalar keys %pages
- |fou = $number_of_new_pages
- |fiv = $total_edits
+ |num users active = ". (scalar keys %users). "
+ |num users new    = $number_of_new_users
+ |num pages active = ". (scalar keys %pages). "
+ |num pages new    = $number_of_new_pages
+ |num edits        = $total_edits
 }}
-
 $post_text
+";
 
-  ";
-  
-print $new_page_text, "\n";
-  
+#print $new_page_text, "\n";
 
-__END__
-  
-  
-  warn "writing\n";
-  
-  my $new_page_name = $page_title;
-  
-  my $new_page_ref = $bifx_mw->
-    get_page( { title => $new_page_name } );
-  
-  #print Dumper $new_page_ref;
-  #next;
-  
-  ## Don't trash existing pages
-  unless ( exists($new_page_ref->{missing}) ){
-    warn "skipping\n";
-    next;
-  }
-  
-  ### To avoid edit conflicts
-  #my $timestamp = $new_page_ref->{timestamp};
-  
-  $bifx_mw->
-    edit({ action => 'edit',
-	   title => $new_page_name,
-	   ## To avoid edit conflicts
-	   #basetimestamp => $timestamp,
-	   text => $new_page_text,
-	 });
-  
-  #exit;
-}
+
+
+# Step 3) upload the new page
+
+warn "writing\n";
+
+## In this simple case we don't need a new MW::API object for upload,
+## however, we need to login now to write.
+
+$mw->
+  login({ lgname => 'Dan Bolser Bot',
+          lgpassword => '000006',
+        });
+
+## To avoid edit conflicts
+my $timestamp = $page_ref->{timestamp};
+
+$mw->
+  edit({ action => 'edit',
+	 title => $page_title,
+	 ## To avoid edit conflicts
+	 basetimestamp => $timestamp,
+	 text => $new_page_text,
+         summary => "uploading statistics for $page_title",
+         ## Mark the edit as a bot edit.
+         bot => '',
+         ## Guard against encoding corruption (I hope!)
+	 md5 => md5_hex($new_page_text),
+       });
 
 warn "OK\n";
