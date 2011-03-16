@@ -1,93 +1,25 @@
 package BioWikiTools;
 
-use strict;
-
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-
-require Exporter;
-
-@ISA = qw(Exporter AutoLoader);
-
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-@EXPORT = qw();
-@EXPORT_OK =
-  qw(
-      connect
-      get_api_list_from_bifx
-      get_rc_list
-      get_rc_stats
-      grab_page
-      grab_page_text
-      parse_biowiki_page_text_and_create_new_text
-      upload_biowiki_page
-   );
-
-$VERSION = '0.01';
-
-
-use MediaWiki::API;
-
 use Digest::MD5 qw(md5_hex);
 
 use LWP::Simple;
 
 use Data::Dumper;
 
+use vars qw(@ISA @EXPORT @EXPORT_OK);
 
+require Exporter;
 
-## CONNECT TO A MW API
+@ISA =
+  qw(Exporter AutoLoader);
 
-sub connect {
-  my $api_url    = shift;
-  my $lgname     = shift;
-  my $lgpassword = shift;
-  
-  ## Get API object for the given URL
-  our $mw = MediaWiki::API->
-    new({ api_url => $api_url, retries => 5 });
-  
-  ## Configure a default error function (saves us checking for errors)
-  $mw->{config}->{on_error} = \&on_error;
-  
-  ## The (private) error function
-  sub on_error {
-    warn "API ERROR! Error code: ", $mw->{error}->{code}, "\n";
-    warn "DETAILS:", $mw->{error}->{details}, "\n";
-    
-    ## Stack trace is often overkill
-    warn $mw->{error}->{stacktrace}, "\n";
-  }
-  
-  ## Perform a minimal test of the connection
-  my $ref = $mw->api({ action => 'query', meta => 'siteinfo' });
-  
-  warn "Connected to : '",
-    $ref->{query}->{general}->{sitename}, "'\n";
-  
-  ## Attempt a login if we got creds
-  if ( defined($lgname) &&
-       defined($lgpassword) ){
-    warn "logging in\n";
-    $mw->
-      login({ lgname => $lgname,
-	      lgpassword => $lgpassword,
-	    });
-  }
-  else{
-    warn "not logging in\n";
-  }
-  
-  if($mw->{error}->{code}){
-    ## we need to manually reset the error code, which sucks
-    $mw->{error}->{code} = 0;
-    return 0;
-  }
-  
-  return $mw;
-}
+@EXPORT_OK =
+  qw( get_biowiki_api_list_from_bifx
+      grab_page
+      grab_page_text
+      parse_biowiki_page_text_and_create_new_text
+      upload_biowiki_page
+   );
 
 
 
@@ -95,8 +27,7 @@ sub connect {
 
 ## Query API url list
 
-sub get_api_list_from_bifx {
-  my $mw = shift;
+sub get_biowiki_api_list_from_bifx {
   
   ## Getting csv feel wrong, but what can you do?
   my $url = "http://www.bioinformatics.org/wiki/Special:Ask";
@@ -106,18 +37,21 @@ sub get_api_list_from_bifx {
   ## URL encode
   #$query =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
   
-  ## Cant seem to encode it right, here is the URL SMW gives
+  ## Cant seem to encode it right, here is the URL SMW gives for the
+  ## above query
   my $bleah = "http://www.bioinformatics.org/wiki/Special:Ask/-5B-5BCategory:BioWiki-5D-5D-20-5B-5BMediaWiki-20API-20URL::%2B-5D-5D/-3FMediaWiki-20API-20URL/format%3Dcsv/sep%3D,/headers%3Dshow/limit%3D100";
   
-  my $content = get( $bleah );
+  my $query_result = get( $bleah );
   
-  die "Couldn't get it!" unless defined $content;
+  die "Couldn't get query result!"
+    unless defined $query_result;
   
-  #warn $content;
+  ## Debugging
+  #die $query_result;
   
   my (%api_list, $got_header);
   
-  for (split("\n", $content)){
+  for (split("\n", $query_result)){
     next unless $got_header++;
     
     my ($page_name, $api_url) = split(/,/, $_);
@@ -130,143 +64,7 @@ sub get_api_list_from_bifx {
   
   warn "Got ", scalar keys %api_list, " APIs to process\n";
   
-  return \%api_list;
-}
-
-
-
-## Grab the recent changes list (object) from the MW API
-
-sub get_rc_list {
-  my $mw = shift;
-  my $rcstart = shift || die;
-  
-  my $rc_list = $mw->
-    list ({
-	   action  => 'query',
-	   list    => 'recentchanges',
-	   
-	   ## Get changes since:
-	   rcdir   => 'newer',
-	   rcstart => $rcstart,
-	   
-	   ## Number of revisions to collect in each batch of results
-	   ## returned by the API
-	   rclimit => '500',
-	   
-	   ## Filters:
-	   rcshow => '!minor|!bot',
-	   
-	   #For reference
-	   #rctype => 'edit|new|log',
-	   
-	   #rcexcludeuser => '',
-	   
-	   ## Properties to return. See:
-	   ## http://www.mediawiki.org/wiki/API:Query_-_Lists#recentchanges_.2F_rc
-	   rcprop =>
-	   'user|timestamp|title|flags|loginfo'
-	   
-	  },
-	  {
-	   ## MW::API Config
-	   
-	   ## Max number of batches to collect (for debugging)
-	   #max => 1
-	   
-	  }
-	 );
-  
-  if($mw->{error}->{code}){
-    ## we need to manually reset the error code, which sucks
-    $mw->{error}->{code} = 0;
-    return 0;
-  }
-  
-  warn "Got ", scalar @$rc_list, " RCs to process\n";
-  
-  return $rc_list;
-}
-
-
-
-
-
-## Compile edit statistics for the rc_array
-
-## here we collect five counts:
-
-## Number of active users (number of new users)
-## Number of pages edited (number of new pages)
-## Number of edits
-
-sub get_rc_stats{
-  my $rc_array = shift;
-  
-  my (%users, $number_of_new_users,
-      %pages, $number_of_new_pages,
-      $total_edits,
-     );
-  
-  foreach my $rc (@$rc_array){
-    
-    if($rc->{type} eq 'log'){
-      ## Seems image uploads don't set a log type
-      unless(defined($rc->{logtype})){
-	## Debugging
-	#warn "unknown logtype!\n";
-	#warn Dumper $rc;
-	next;
-      }
-      if($rc->{logtype} eq 'newusers'){
-	## Sanity check
-	die Dumper $rc
-	  unless
-	    $rc->{logaction} eq 'create' ||
-	    $rc->{logaction} eq 'create2'; # EcoliWiki
-	#warn 'new user: ', $rc->{user}, "\n";
-	$number_of_new_users++;
-      }
-      else{
-	## No other logtypes (e.g. delete, block, upload, move, ...)
-	## concern us here.
-	
-	## TODO: We could look at the deletion log and see if any of our
-	## new users or new pages for the month should be deleted...
-      }
-    }
-    
-    elsif($rc->{type} eq 'new'){
-      ## Sanity check
-      die Dumper $rc
-	unless defined($rc->{new});
-      #warn 'new page: ', $rc->{title}, "\n";
-      $number_of_new_pages++;
-      $users{$rc->{ user}}++;
-      $pages{$rc->{title}}++;
-    }
-    
-    elsif($rc->{type} eq 'edit'){
-      ## Filter bots and minor edits
-      ## Need a username kill list here?
-      next if defined($rc->{minor});
-      $total_edits++;
-      $users{$rc->{ user}}++;
-      $pages{$rc->{title}}++;
-    }
-    
-    else{
-      die Dumper $rc;
-    }
-    
-    next;
-  }
-  
-  ## Return five numbers
-  return [ scalar keys %users || 0, $number_of_new_users || 0,
-	   scalar keys %pages || 0, $number_of_new_pages || 0,
-	   $total_edits || 0,
-	 ];
+  return %api_list;
 }
 
 
@@ -288,7 +86,7 @@ sub grab_page {
   
   if($mw->{error}->{code}){
     ## we need to manually reset the error code, which sucks
-    $mw->{error}->{code} = 0;
+    #$mw->{error}->{code} = 0;
     return 0;
   }
   
@@ -433,7 +231,7 @@ sub upload_biowiki_page {
   if($mw->{error}->{code}){
     warn "WHY DOES THIS FAIL WITHOUT SETTING DEETS?\n";
     ## we need to manually reset the error code, which sucks
-    $mw->{error}->{code} = 0;
+    #$mw->{error}->{code} = 0;
     return 0;
   }
   
