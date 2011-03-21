@@ -1,10 +1,6 @@
 package BioWikiTools;
 
-use Digest::MD5 qw(md5_hex);
-
 use LWP::Simple;
-
-use Data::Dumper;
 
 use vars qw(@ISA @EXPORT @EXPORT_OK);
 
@@ -15,13 +11,9 @@ require Exporter;
 
 @EXPORT_OK =
   qw( get_biowiki_api_list_from_bifx
-      grab_page
-      grab_page_text
       parse_biowiki_page_text_and_create_new_text
       upload_biowiki_page
    );
-
-
 
 
 
@@ -70,39 +62,6 @@ sub get_biowiki_api_list_from_bifx {
 
 
 
-
-## OK, now we have to upload...
-
-# Step 0) grab the existing BioWiki page
-
-sub grab_page {
-  my $mw = shift;
-  my $page_title = shift;
-  
-  my $page_ref = $mw->
-    get_page({ title => $page_title });
-  
-  #print Dumper $page_ref;
-  
-  if($mw->{error}->{code}){
-    ## we need to manually reset the error code, which sucks
-    #$mw->{error}->{code} = 0;
-    return 0;
-  }
-  
-  return $page_ref;
-}
-
-sub grab_page_text {
-  my $page_ref = shift;
-  my $page_text = $page_ref->{'*'};
-  
-  return $page_text;
-}
-
-
-
-# Step 1) parse the existing BioWiki page
 
 sub parse_biowiki_page_text_and_create_new_text {
   my $page_text = shift;
@@ -173,7 +132,7 @@ sub parse_biowiki_page_text_and_create_new_text {
   
   
   
-  # Step 2) create the new page text
+  ## Create the new page text
   
   my $new_page_text = "$pre_text
 {{BioWiki
@@ -199,45 +158,6 @@ sub parse_biowiki_page_text_and_create_new_text {
 }}$post_text";
   
   return $new_page_text;
-}
-
-
-
-# Step 3) upload the new page
-
-sub upload_biowiki_page {
-  my $mw = shift;
-  my $page_ref = shift;
-  my $page_title = shift;
-  my $new_page_text = shift;
-  
-  ## To avoid edit conflicts
-  my $timestamp = $page_ref->{timestamp};
-  
-  $mw->
-    edit({ action => 'edit',
-	   title => $page_title,
-	   ## To avoid edit conflicts
-	   basetimestamp => $timestamp,
-	   text => $new_page_text,
-	   summary => "uploading statistics for $page_title",
-	   ## Mark the edit as a bot edit.
-	   bot => '',
-	   ## Guard against encoding corruption (I hope!)
-	   ## TODO: make encoding work good
-	   #md5 => md5_hex($new_page_text),
-	 });
-  
-  if($mw->{error}->{code}){
-    warn "WHY DOES THIS FAIL WITHOUT SETTING DEETS?\n";
-    ## we need to manually reset the error code, which sucks
-    #$mw->{error}->{code} = 0;
-    return 0;
-  }
-  
-  warn "Updated\n";
-  
-  return 1;
 }
 
 1;

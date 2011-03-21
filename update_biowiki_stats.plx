@@ -5,16 +5,11 @@ use MediaWiki::API::helper;
 
 use BioWikiTools
     qw( get_biowiki_api_list_from_bifx
-	grab_page
-	grab_page_text
         parse_biowiki_page_text_and_create_new_text
 	upload_biowiki_page
      );
 
 use Getopt::Long;
-
-
-
 
 my $verbose = 0;
 
@@ -27,13 +22,16 @@ GetOptions( "username=s" => \$username,
 	  )
   or die "failure to communicate\n";
 
-warn "no username or password provided, will not update\n"
+warn "\nNote: no username (-u --username) or password (-p --password)
+provided, will not update!\n\n"
   unless defined($username) && defined($password);
 
 
 
+
+
 ## CONNECT TO BIFX MW API
-warn "connecting to bifx mw api\n";
+warn "Connecting to bifx mw api\n";
 
 my $bifx_api_url =
   'http://www.bioinformatics.org/w/api.php';
@@ -44,10 +42,20 @@ my $bifx_api = MediaWiki::API::helper->
 $bifx_api->test
   or die "FAILED TO CONNECT\n";
 
+if( defined($username) && defined($password) ){
+  $bifx_api->
+    login({ lgname => $username,
+	    lgpassword => $password,
+	  })
+      or die "FAILED TO LOGIN!\n";
+}
+
+
+
 
 
 ## COLLECT THE BIOWIKI API LIST
-warn "collecting api list\n";
+warn "Collecting api list\n";
 
 my %biowiki_api_list =
   get_biowiki_api_list_from_bifx;
@@ -56,15 +64,15 @@ my %biowiki_api_list =
 
 
 
-## PROCESS THE LIST
-
-warn "\nprocessing\n";
+## PROCESS THE BIOWIKI API LIST
+warn "\nProcessing\n";
 
 for my $page_name (sort {$a cmp $b} keys %biowiki_api_list){
-#for my $page_name (sort {$b cmp $a} keys %biowiki_api_list){
   warn "\n\nDoing $page_name\n";
   
   #next unless $page_name eq 'Bvio';
+  
+  ## Cant handle Wikipedia projects here!
   next if $page_name eq 'Gene Wiki';
   
   my $biowiki_api_url =
@@ -78,47 +86,40 @@ for my $page_name (sort {$a cmp $b} keys %biowiki_api_list){
     next;
   }
   
-  #my $rc_list =
-  #  $biowiki_api->get_rc_list({ months => 1 });
-  # 
-  #unless($rc_list){
-  #  die "FAILED TO GET RC LIST\n";
-  #  next;
-  #}
+  
+  
+  warn "Collecting rc stats\n";
+  
+  my $rcstats =
+    $biowiki_api->get_rcstats({ months => 1 });
+  warn "Note:\t", join("\t", @$rcstats), "\n";
   
   
   
-  warn "collecting rc stats\n";
+  warn "Updating page\n";
   
-  my $rc_stats =
-    $biowiki_api->get_rc_stats({ months => 1 });
-  warn "Note:\t", join("\t", @$rc_stats), "\n";
-  
-  next;
-}
-
-__END__
-
-  
-  warn "updating page\n";
-  
-  my $page_ref =
-    grab_page( $bifx_api, $page_name );
+  my $page_ref = $bifx_api->
+    get_page({ title => $page_name });
   
   unless($page_ref){
-    warn "failed to get page ref!\n";
+    warn "Failed to get page ref!\n";
     next;
   }
   
+  my $page_text = $page_ref->{'*'};
+  
   my $new_text =
     parse_biowiki_page_text_and_create_new_text(
-      grab_page_text($page_ref), $rc_stats
+      $page_text, $rcstats
     );
   
   #print $new_text; exit;
   
-  upload_biowiki_page( $bifx_api, $page_ref, $page_name, $new_text )
-    or warn "failed to upload page... did you log in?\n";
+  ## To avoid edit conflicts
+  my $timestamp = $page_ref->{timestamp};
+  
+  $bifx_api->upload_page( $page_name, $timestamp, $new_text )
+    or warn "Failed to upload page... did you log in?\n";
   
   warn "OK\n";
   

@@ -1,11 +1,13 @@
 package MediaWiki::API::helper;
 
+use Data::Dumper;
+
 use MediaWiki::API;
 
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use Data::Validate::URI qw(is_web_uri);
+use Data::Validate::URI qw( is_web_uri );
 
 subtype 'URL'
   => as 'Str'
@@ -21,8 +23,13 @@ has 'api_url' => (
 has 'api_obj' => (
     is  => 'ro',
     isa => 'MediaWiki::API',
-    builder => '_connect',
     required => 1,
+    
+    builder => '_connect',
+    
+    ## These are MediaWiki::API methods that we want the helper to
+    ## seamlessly 'handle'
+    handles => [qw( get_page login )],
 );
 
 use DateTime;
@@ -56,12 +63,12 @@ sub _on_error {
   my $self = shift;
   
   warn "API ERROR!\n";
-  warn "\tError code: ", $self->api_obj->{error}->{code}, "\n";
-  warn "\tDETAILS:\n",   $self->api_obj->{error}->{details}, "\n";
+  warn "\terror code: ", $self->api_obj->{error}->{code}, "\n";
+  warn "\tdetails:\n",   $self->api_obj->{error}->{details}, "\n";
   
   ## Stack trace is often overkill
   warn $self->api_obj->{error}->{stacktrace}, "\n"
-    if $self->verbose > 0;
+    if $self->debug > 0;
   
   ## Debugging
   exit 1
@@ -70,48 +77,27 @@ sub _on_error {
 
 
 
-sub test{
+sub test {
   my $self = shift;
   
   ## See: http://www.mediawiki.org/wiki/API:Meta#siteinfo_.2F_si
   my $ref =
-    $self->api_obj->api({ action => 'query', meta => 'siteinfo' });
-  
-  warn "Connected to : '",
-    $ref->{query}->{general}->{sitename}  || '', "' (",
-    $ref->{query}->{general}->{generator} || '', ")\n";
-  
-  ## fail! rcunknown_rcprop: Unrecognised value for parameter 'rcprop'
-  ## MediaWiki 1.12.0
-  
-  return $self->_ok;
-}
-
-
-
-sub _ok {
-  my $self = shift;
-  
-  if($self->api_obj->{error}->{code}){
-    ## We need to manually reset the error code, which sucks
-    ## https://rt.cpan.org/Public/Bug/Display.html?id=66388
-    $self->api_obj->{error}->{code} = 0;
-    return 0;
-  }
-  return 1;
-}
-
-sub mw_login {
-  my $self = shift;
-  my $credentials = shift;
-  
-  warn "logging in\n";
-  $self->api_obj->
-    login({ lgname => $credentials->[0],
-	    lgpassword => $credentials->[1],
+    $self->api_obj->
+      api({ action => 'query',
+	    meta => 'siteinfo'
 	  });
   
-  return $self->_ok;
+  return 0
+    unless $ref;
+  
+  warn "connected to : '",
+    $ref->{query}->{general}->{sitename}, "' (",
+    $ref->{query}->{general}->{generator}, ")\n";
+  
+  ## Fail! rcunknown_rcprop: Unrecognised value for parameter 'rcprop'
+  ## MediaWiki 1.12.0
+  
+  return 1;
 }
 
 
@@ -126,7 +112,7 @@ sub mw_login {
 ## Number of pages edited (number of new pages)
 ## Number of edits
 
-sub get_rc_stats{
+sub get_rcstats {
   my $self = shift;
   my $rcstart_off = shift || { hours => 1 };
   
@@ -160,8 +146,9 @@ sub get_rc_stats{
 	## No other logtypes (e.g. delete, block, upload, move, ...)
 	## concern us here.
 	
-	## TODO: We could look at the deletion log and see if any of our
-	## new users or new pages for the month should be deleted...
+	## TODO: We could look at the deletion log and see if any of
+	## our new users or new pages for the month should be
+	## deleted...
       }
     }
     
@@ -200,69 +187,86 @@ sub get_rc_stats{
 
 
 
-## Grab the recent changes list (object) from the MediaWiki API
+## Get the recent changes list from the MediaWiki API
 
 sub get_rclist {
   my $self = shift;
   my $rcstart_off = shift || { hours => 1 };
   
   ## We use 'epoch' time format here, simply becase it's easy to pass
-  ## to MediaWiki https://rt.cpan.org/Public/Bug/Display.html?id=66611
+  ## to MediaWiki
   my $rcstart =
     $self->rcstart->subtract( $rcstart_off )->epoch;
   
-  my $rc_list = $self->api_obj->
-    list ({
-	   action  => 'query',
-	   list    => 'recentchanges',
-	   
-	   ## Get changes since:
-	   rcdir   => 'newer',
-	   rcstart => $rcstart,
-	   
-	   ## Number of revisions to collect in each batch of results
-	   ## returned by the API
-	   rclimit => '500',
-	   
-	   ## Filters:
-	   rcshow => '!minor|!bot',
-	   
-	   #For reference
-	   #rctype => 'edit|new|log',
-	   
-	   #rcexcludeuser => '',
-	   
-	   ## Properties to return. See:
-	   ## http://www.mediawiki.org/wiki/API:Recentchanges
-	   rcprop =>
-	   'user|timestamp|title|flags|loginfo'
-	   
-	  },
-	  {
-	   ## MW::API Config
-	   
-	   ## Max number of batches to collect (for debugging)
-	   #max => 1
-	   
-	  }
-	 );
+  my $rclist =
+    $self->api_obj->
+      list ({ action  => 'query',
+	      list    => 'recentchanges',
+	      
+	      ## Get changes since:
+	      rcdir   => 'newer',
+	      rcstart => $rcstart,
+	      
+	      ## Number of revisions to collect in each batch of results
+	      ## returned by the API
+	      rclimit => '500',
+	      
+	      ## Filters:
+	      rcshow => '!minor|!bot',
+	      
+	      #For reference
+	      #rctype => 'edit|new|log',
+	      
+	      #rcexcludeuser => '',
+	      
+	      ## Properties to return. See:
+	      ## http://www.mediawiki.org/wiki/API:Recentchanges
+	      rcprop => 'user|timestamp|title|flags|loginfo'
+	      
+	    },
+	    {
+	     ## MW::API Config
+	     
+	     ## Max number of batches to collect (for debugging)
+	     #max => 1
+	     
+	    }
+	   );
   
-  if($self->_ok){
-    warn "Got ", scalar @$rc_list, " RCs to process\n";
-    return $rc_list;
-  }
+  return []
+    unless $rclist;
   
-  ## Return an empty list reference;
-  return [];
+  warn "got ", scalar @$rclist, " RCs to process\n";
+  
+  return $rclist;
 }
 
 
 
+## upload a page
 
-
-
-
-
-
+sub upload_page {
+  my $self = shift;
+  my $page_name = shift;
+  my $timestamp = shift;
+  my $new_text = shift;
+  
+  my $edit =
+    $self->api_obj->
+      edit({ action => 'edit',
+	     title => $page_name,
+	     ## To avoid edit conflicts
+	     basetimestamp => $timestamp,
+	     text => $new_text,
+	     summary => "Uploading statistics for $page_name",
+	     ## Mark the edit as a bot edit.
+	     bot => '',
+	     ## Guard against encoding corruption (I hope!)
+	     ## TODO: make encoding work good
+	     #md5 => md5_hex($new_text),
+	   });
+  
+  return $edit;
+}
 
 1;
