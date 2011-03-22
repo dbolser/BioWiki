@@ -12,7 +12,6 @@ require Exporter;
 @EXPORT_OK =
   qw( get_biowiki_api_list_from_bifx
       parse_biowiki_page_text_and_create_new_text
-      upload_biowiki_page
    );
 
 
@@ -89,8 +88,8 @@ sub parse_biowiki_page_text_and_create_new_text {
   chomp($pre_text);
   chomp($post_text);
 
-  ## Strip newlines from the template body
-  $template_body =~ s/\n//g;
+  ## Strip newlines from the template body?
+  #$template_body =~ s/\n//g;
   
   ## Parse the template fields
   my @fields = split(/\||=/, $template_body);
@@ -136,25 +135,24 @@ sub parse_biowiki_page_text_and_create_new_text {
   
   my $new_page_text = "$pre_text
 {{BioWiki
- |date created = ". ($fields{'date created'} || ''). "
- |num pages    = ". ($fields{'num pages'}    || ''). "
- |num users    = ". ($fields{'num users'}    || ''). "
- |num contribs = ". ($fields{'num contribs'} || ''). "
- |contribs     = ". ($fields{'contribs'}     || ''). "
- |logo file    = ". ($fields{'logo file'}    || ''). "
- |platform     = ". ($fields{'platform'}     || ''). "
- |api url      = ". ($fields{'api url'}      || ''). "
- |extensions   = ". ($fields{'extensions'}   || ''). "
- |url          = ". ($fields{'url'}          || ''). "
- |people       = ". ($fields{'people'}       || ''). "
- |email        = ". ($fields{'email'}        || ''). "
- |institutions = ". ($fields{'institutions'} || ''). "
-
- |num users active = $users
- |num users new    = $number_of_new_users
- |num pages active = $pages
- |num pages new    = $number_of_new_pages
- |num edits        = $total_edits
+|date created=". ($fields{'date created'} || ''). "
+|num pages=".    ($fields{'num pages'}    || ''). "
+|num users=".    ($fields{'num users'}    || ''). "
+|num contribs=". ($fields{'num contribs'} || ''). "
+|contribs=".     ($fields{'contribs'}     || ''). "
+|logo file=".    ($fields{'logo file'}    || ''). "
+|platform=".     ($fields{'platform'}     || ''). "
+|api url=".      ($fields{'api url'}      || ''). "
+|extensions=".   ($fields{'extensions'}   || ''). "
+|num users active=". $users                     . "
+|num users new=".    $number_of_new_users       . "
+|num pages active=". $pages                     . "
+|num pages new=".    $number_of_new_pages       . "
+|num edits=".        $total_edits               . "
+|url=".          ($fields{'url'}          || ''). "
+|people=".       ($fields{'people'}       || ''). "
+|email=".        ($fields{'email'}        || ''). "
+|institutions=". ($fields{'institutions'} || ''). "
 }}$post_text";
   
   return $new_page_text;

@@ -94,8 +94,18 @@ sub test {
     $ref->{query}->{general}->{sitename}, "' (",
     $ref->{query}->{general}->{generator}, ")\n";
   
-  ## Fail! rcunknown_rcprop: Unrecognised value for parameter 'rcprop'
-  ## MediaWiki 1.12.0
+  ## We make some assumptions about the version code here, but seems
+  ## to hold so far ...
+  die unless
+    $ref->{query}->{general}->{generator} =~ /MediaWiki (\d+\.\d+\.\d+)/;
+  
+  ## Reject sites below our minimum version requirement (Seeing :
+  ## "Unrecognised value for parameter 'rcprop'" for versions 1.12.0
+  ## and below).
+  if ($1 lt "1.13.0"){
+    warn "rejecting MW versions below 1.13.0!\n";
+    return 0;
+  }
   
   return 1;
 }

@@ -1,0 +1,378 @@
+Doing BioFoundation.Net
+connecting
+connected to : 'Biofoundation_net' (MediaWiki 1.16.0)
+Collecting rc stats
+got 0 RCs to process
+Note:	0	0	0	0	0
+Updating page
+OK
+
+
+Doing BioPedia
+connecting
+connected to : 'Biopedia.org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 9 RCs to process
+Note:	3	2	3	2	5
+Updating page
+OK
+
+
+Doing BioPerl Wiki
+connecting
+connected to : 'BioPerl' (MediaWiki 1.15.2)
+Collecting rc stats
+got 155 RCs to process
+Note:	8	41	15	3	30
+Updating page
+OK
+
+
+Doing Biocompany.net
+connecting
+connected to : 'Biocompany.net' (MediaWiki 1.16.0)
+Collecting rc stats
+got 3 RCs to process
+Note:	2	0	2	0	3
+Updating page
+OK
+
+
+Doing Bioinformatics.Org Wiki
+connecting
+connected to : 'Bioinformatics.Org Wiki' (MediaWiki 1.15.5)
+Collecting rc stats
+got 38 RCs to process
+Note:	11	12	11	4	20
+Updating page
+OK
+
+
+Doing Biomatics.Org
+connecting
+connected to : 'Biomatics.org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 150 RCs to process
+Note:	11	98	11	8	6
+Updating page
+OK
+
+
+Doing Biopeople.org
+connecting
+connected to : 'Biopeople_org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 6 RCs to process
+Note:	3	2	4	3	1
+Updating page
+OK
+
+
+Doing Biosophy.org
+connecting
+connected to : 'Biosophy_org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 26 RCs to process
+Note:	1	0	13	5	18
+Updating page
+OK
+
+
+Doing Biowiki.net
+connecting
+connected to : 'Biowiki.net' (MediaWiki 1.16.0)
+Collecting rc stats
+got 0 RCs to process
+Note:	0	0	0	0	0
+Updating page
+OK
+
+
+Doing Brede Wiki
+connecting
+connected to : 'Brede Wiki' (MediaWiki 1.13.3)
+Collecting rc stats
+got 315 RCs to process
+Note:	1	0	64	26	96
+Updating page
+OK
+
+
+Doing Bvio
+connecting
+connected to : 'Bvio' (MediaWiki 1.16.0)
+Collecting rc stats
+got 74 RCs to process
+Note:	13	38	13	13	0
+Updating page
+OK
+
+
+Doing CCP4 users' wiki
+connecting
+connected to : 'CCP4 wiki' (MediaWiki 1.16.2)
+Collecting rc stats
+got 222 RCs to process
+Note:	2	52	8	1	22
+Updating page
+OK
+
+
+Doing CHDWiki
+connecting
+connected to : 'CHDWiki' (MediaWiki 1.12.0)
+Collecting rc stats
+API ERROR!
+	error code: 3
+	details:
+rcunknown_rcprop: Unrecognised value for parameter 'rcprop'
+Note:	0	0	0	0	0
+Updating page
+OK
+
+
+Doing DrugMet
+connecting
+connected to : 'DrugMet' (MediaWiki 1.16.0)
+Collecting rc stats
+got 6 RCs to process
+Note:	1	0	1	0	1
+Updating page
+OK
+
+
+Doing EcoliWiki
+connecting
+connected to : 'EcoliWiki' (MediaWiki 1.14.1)
+Collecting rc stats
+got 22 RCs to process
+Note:	3	4	17	3	15
+Updating page
+OK
+
+
+Doing GMOD Wiki
+connecting
+API ERROR!
+	error code: 2
+	details:
+403 Forbidden : error occurred when accessing http://gmod.org/w/api.php after 6 attempt(s)
+FAILED TO CONNECT
+
+
+Doing GONUTS
+connecting
+connected to : 'GONUTS' (MediaWiki 1.14.1)
+Collecting rc stats
+got 343 RCs to process
+Note:	35	0	171	4	337
+Updating page
+OK
+
+
+Doing Gene Wiki
+
+
+Doing Genomics.Org
+connecting
+connected to : 'Genomics_org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 136 RCs to process
+Note:	12	47	14	12	12
+Updating page
+OK
+
+
+Doing Jmol Wiki
+connecting
+connected to : 'Jmol' (MediaWiki 1.16.2)
+Collecting rc stats
+got 1476 RCs to process
+Note:	3	64	3	1	7
+Updating page
+OK
+
+
+Doing Metagenes
+connecting
+connected to : 'Metagenes' (MediaWiki 1.15.1)
+Collecting rc stats
+got 0 RCs to process
+Note:	0	0	0	0	0
+Updating page
+OK
+
+
+Doing MyBio
+connecting
+connected to : 'MyBio' (MediaWiki 1.16.2)
+Collecting rc stats
+got 11 RCs to process
+Note:	7	3	7	0	8
+Updating page
+OK
+
+
+Doing NESCent Informatics Wiki
+connecting
+API ERROR!
+	error code: 2
+	details:
+404 Not Found : error occurred when accessing http://informatics.nescent.org/wg/phyloinformatics/api.php after 6 attempt(s)
+FAILED TO CONNECT
+
+
+Doing NeuroLex
+connecting
+connected to : 'NeuroLex' (MediaWiki 1.15.1)
+Collecting rc stats
+got 1624 RCs to process
+Note:	39	10	906	370	981
+Updating page
+OK
+
+
+Doing NeuroWiki
+connecting
+connected to : 'WikiCNS' (MediaWiki 1.10.0)
+Collecting rc stats
+API ERROR!
+	error code: 3
+	details:
+rcunknown_rcprop: Unrecognised values for parameter 'rcprop'
+Note:	0	0	0	0	0
+Updating page
+OK
+
+
+Doing Omics.org
+connecting
+connected to : 'Omics.org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 107 RCs to process
+Note:	35	46	34	33	2
+Updating page
+OK
+
+
+Doing OpenWetWare
+connecting
+connected to : 'OpenWetWare' (MediaWiki 1.13.2)
+Collecting rc stats
+got 1348 RCs to process
+Note:	125	0	254	84	1144
+Updating page
+OK
+
+
+Doing PDBWiki
+connecting
+connected to : 'PDBWiki' (MediaWiki 1.15.1)
+Collecting rc stats
+got 1 RCs to process
+Note:	1	0	1	0	1
+Updating page
+OK
+
+
+Doing Proteopedia
+connecting
+API ERROR!
+	error code: 2
+	details:
+Failed to decode JSON returned by http://www.proteopedia.org/wiki/api.php
+Decoding Error:
+malformed JSON string, neither array, object, number, string or atom, at character offset 9 (before "MediaWiki API is not...") at /home/dmb/perl5/lib/perl5/MediaWiki/API.pm line 368.
+
+Returned Data:
+
+
+
+
+
+
+
+
+
+MediaWiki API is not enabled for this site. Add the following line to your LocalSettings.php<pre><b>$wgEnableAPI=true;</b></pre>
+FAILED TO CONNECT
+
+
+Doing PyMOLWiki
+connecting
+connected to : 'PyMOLWiki' (MediaWiki 1.16.1)
+Collecting rc stats
+got 33 RCs to process
+Note:	5	2	13	7	18
+Updating page
+OK
+
+
+Doing SEQwiki
+connecting
+connected to : 'SEQwiki' (MediaWiki 1.16.0)
+Collecting rc stats
+got 31 RCs to process
+Note:	8	0	25	7	24
+Updating page
+OK
+
+
+Doing SNPedia
+connecting
+connected to : 'SNPedia' (MediaWiki 1.16.2)
+Collecting rc stats
+got 392 RCs to process
+Note:	19	20	222	55	251
+Updating page
+OK
+
+
+Doing Sajun.Org
+connecting
+connected to : 'Sajun.org' (MediaWiki 1.16.0)
+Collecting rc stats
+got 115 RCs to process
+Note:	49	26	50	47	6
+Updating page
+OK
+
+
+Doing SubtiWiki
+connecting
+connected to : 'SubtiWiki' (MediaWiki 1.16.2)
+Collecting rc stats
+got 565 RCs to process
+Note:	6	5	248	6	542
+Updating page
+OK
+
+
+Doing SubtilisWiki
+connecting
+connected to : 'SubtilisWiki' (MediaWiki 1.16.2)
+Collecting rc stats
+got 2 RCs to process
+Note:	1	0	1	0	1
+Updating page
+OK
+
+
+Doing WikiPathways
+connecting
+connected to : 'WikiPathways' (MediaWiki 1.13.1)
+Collecting rc stats
+got 2169 RCs to process
+Note:	70	0	1787	153	2014
+Updating page
+OK
+
+
+Doing XDSwiki
+connecting
+connected to : 'XDSwiki' (MediaWiki 1.16.2)
+Collecting rc stats
+got 139 RCs to process
+Note:	2	1	14	2	83
+Updating page
+OK

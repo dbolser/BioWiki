@@ -3,11 +3,12 @@
 use strict;
 use MediaWiki::API::helper;
 
+## Two bulky functions that I put into a 'package' for clarity here
 use BioWikiTools
-    qw( get_biowiki_api_list_from_bifx
-        parse_biowiki_page_text_and_create_new_text
-	upload_biowiki_page
-     );
+  qw(
+      get_biowiki_api_list_from_bifx
+      parse_biowiki_page_text_and_create_new_text
+   );
 
 use Getopt::Long;
 
@@ -21,10 +22,6 @@ GetOptions( "username=s" => \$username,
 	    "verbose"    => \$verbose,
 	  )
   or die "failure to communicate\n";
-
-warn "\nNote: no username (-u --username) or password (-p --password)
-provided, will not update!\n\n"
-  unless defined($username) && defined($password);
 
 
 
@@ -49,6 +46,11 @@ if( defined($username) && defined($password) ){
 	  })
       or die "FAILED TO LOGIN!\n";
 }
+else{
+  warn "
+Note : No username (-u --username) and password (-p --password) found,
+will not update!\n\n"
+}
 
 
 
@@ -69,8 +71,6 @@ warn "\nProcessing\n";
 
 for my $page_name (sort {$a cmp $b} keys %biowiki_api_list){
   warn "\n\nDoing $page_name\n";
-  
-  #next unless $page_name eq 'Bvio';
   
   ## Cant handle Wikipedia projects here!
   next if $page_name eq 'Gene Wiki';
@@ -123,7 +123,7 @@ for my $page_name (sort {$a cmp $b} keys %biowiki_api_list){
   
   warn "OK\n";
   
-  exit;
+  #exit;
 }
 
 
