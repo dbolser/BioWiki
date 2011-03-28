@@ -97,7 +97,7 @@ sub test {
   ## We make some assumptions about the version code here, but seems
   ## to hold so far ...
   die unless
-    $ref->{query}->{general}->{generator} =~ /MediaWiki (\d+\.\d+\.\d+)/;
+    $ref->{query}->{general}->{generator} =~ /MediaWiki (\d+\.\d+(\.\d+)?)(alpha)?/;
   
   ## Reject sites below our minimum version requirement (Seeing :
   ## "Unrecognised value for parameter 'rcprop'" for versions 1.12.0
